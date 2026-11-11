@@ -1,0 +1,17 @@
+[application]
+name = "Saksham"
+default_platform = "web"
+out_dir = "dist"
+asset_dir = "assets"
+
+[web.app]
+title = "Saksham"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "assets"]
+
+[bundle]
+identifier = "learn.saksham.app"
+publisher = "Saksham"
+icon = []
