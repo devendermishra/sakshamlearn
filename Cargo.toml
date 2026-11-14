@@ -6,6 +6,7 @@ description = "Saksham, a calm Hindi learning app for a tablet"
 publish = false
 
 [dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 dioxus = { version = "0.7.5" }
 gloo-timers = { version = "0.3", features = ["futures"] }
 js-sys = "0.3"

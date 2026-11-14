@@ -1,7 +1,7 @@
+use super::icon::Icon;
 use crate::lock;
 use crate::state::{use_app, Screen};
 use dioxus::prelude::*;
-use super::icon::Icon;
 
 #[component]
 pub fn ParentGate() -> Element {
@@ -136,18 +136,13 @@ fn push_digit(
             unlocked.set(true);
             message.set("तैयार".to_string());
         } else {
-            message.set(
-                "दोनों बार एक समान लिखो"
-                    .to_string(),
-            );
+            message.set("दोनों बार एक समान लिखो".to_string());
             draft.set(None);
         }
         entered.set(String::new());
     } else {
         draft.set(Some(code));
         entered.set(String::new());
-        message.set(
-            "वही लिखो एक बार और".to_string(),
-        );
+        message.set("वही लिखो एक बार और".to_string());
     }
 }

@@ -67,8 +67,11 @@ fn Shell() -> Element {
                 Screen::Group { group, mode } => rsx! { ui::home::GroupPage { group, mode } },
                 Screen::Matra { consonant, mode } => rsx! { ui::home::MatraPage { consonant, mode } },
                 Screen::Session { id, mode, nonce } => rsx! {
-                    session::SessionScreen { key: "{id}-{nonce}", id, mode }
+                    session::SessionScreen { key: "{id}-{nonce}", id, mode, nonce }
                 },
+                Screen::Aba => rsx! { ui::aba::AbaMenu {} },
+                Screen::AbaCalendar => rsx! { ui::aba::CalendarScreen {} },
+                Screen::AbaChecklist => rsx! { ui::aba::ChecklistScreen {} },
                 Screen::Rewards => rsx! { ui::rewards::RewardBoard {} },
                 Screen::Parent => rsx! { ui::parent::ParentGate {} },
             }

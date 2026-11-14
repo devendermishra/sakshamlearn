@@ -35,7 +35,11 @@ fn android_set(lock: bool) {
         return;
     }
     let activity = unsafe { jni::objects::JObject::from_raw(activity_ptr) };
-    let method = if lock { "startLockTask" } else { "stopLockTask" };
+    let method = if lock {
+        "startLockTask"
+    } else {
+        "stopLockTask"
+    };
     let _ = guard.call_method(&activity, method, "()V", &[]);
     if guard.exception_check().unwrap_or(false) {
         let _ = guard.exception_clear();

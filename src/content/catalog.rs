@@ -1,4 +1,4 @@
-use super::{barakhadi_items, pattern_items, swar_items, vyanjan_items, Item, Kind, QuizQ};
+use super::{barakhadi_items, pattern_items, swar_items, vyanjan_items, Item, Kind, Lang, QuizQ};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Goal {
@@ -7,6 +7,10 @@ pub enum Goal {
     Fluency,
     Meaning,
     Writing,
+    Count,
+    AddSub,
+    Tables,
+    Divide,
 }
 
 pub const GOALS: [Goal; 5] = [
@@ -16,6 +20,8 @@ pub const GOALS: [Goal; 5] = [
     Goal::Meaning,
     Goal::Writing,
 ];
+
+pub const MATH_GOALS: [Goal; 4] = [Goal::Count, Goal::AddSub, Goal::Tables, Goal::Divide];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Subject {
@@ -34,12 +40,227 @@ pub struct Paper {
     pub questions: Vec<QuizQ>,
 }
 
-pub fn subjects() -> [Subject; 3] {
+pub fn subjects() -> [Subject; 4] {
     [
-        Subject { index: 0, title: "हिन्दी", open: true },
-        Subject { index: 1, title: "English", open: false },
-        Subject { index: 2, title: "गणित", open: false },
+        Subject {
+            index: 0,
+            title: "हिन्दी",
+            open: true,
+        },
+        Subject {
+            index: 1,
+            title: "English",
+            open: false,
+        },
+        Subject {
+            index: 2,
+            title: "गणित",
+            open: true,
+        },
+        Subject {
+            index: 3,
+            title: "ABA",
+            open: true,
+        },
     ]
+}
+
+pub fn goals_for(subject: u8) -> &'static [Goal] {
+    if subject == 2 {
+        &MATH_GOALS
+    } else {
+        &GOALS
+    }
+}
+
+pub fn is_math_goal(goal: Goal) -> bool {
+    matches!(
+        goal,
+        Goal::Count | Goal::AddSub | Goal::Tables | Goal::Divide
+    )
+}
+
+pub fn subject_heading(subject: u8, lang: Lang) -> &'static str {
+    match subject {
+        2 => {
+            if lang == Lang::En {
+                "Mathematics"
+            } else {
+                "गणित"
+            }
+        }
+        _ => "हिन्दी",
+    }
+}
+
+pub fn class_blurb(subject: u8, class_no: u8, lang: Lang) -> &'static str {
+    if subject == 2 {
+        return match (class_no, lang) {
+            (1, Lang::En) => "Counting, adding, and small tables.",
+            (1, Lang::Hi) => "गिनती, जोड़, और छोटे पहाड़े।",
+            (_, Lang::En) => "To hundreds, tables, and sharing by taking away.",
+            (_, Lang::Hi) => "सैकड़ा तक, पहाड़े, और घटाकर बाँटना।",
+        };
+    }
+    if class_no == 1 {
+        "एक वाक्य: रीना पौधे को पानी देती है।"
+    } else {
+        "तीन चित्र, क्रम, और जुड़े वाक्य।"
+    }
+}
+
+pub fn phrase(key: &str, lang: Lang) -> &'static str {
+    let en = lang == Lang::En;
+    match key {
+        "home" => {
+            if en {
+                "Home"
+            } else {
+                "घर"
+            }
+        }
+        "back" => {
+            if en {
+                "Back"
+            } else {
+                "वापस"
+            }
+        }
+        "learn" => {
+            if en {
+                "Learn"
+            } else {
+                "सीखो"
+            }
+        }
+        "practice" => {
+            if en {
+                "Practice"
+            } else {
+                "अभ्यास"
+            }
+        }
+        "exam" => {
+            if en {
+                "Test"
+            } else {
+                "परीक्षा"
+            }
+        }
+        "next" => {
+            if en {
+                "Next"
+            } else {
+                "आगे"
+            }
+        }
+        "erase" => {
+            if en {
+                "Erase"
+            } else {
+                "मिटाओ"
+            }
+        }
+        "pause" => {
+            if en {
+                "Pause"
+            } else {
+                "रोकें"
+            }
+        }
+        "listen" => {
+            if en {
+                "Hear again"
+            } else {
+                "फिर सुनो"
+            }
+        }
+        "hear" => {
+            if en {
+                "Hear"
+            } else {
+                "सुनो"
+            }
+        }
+        "show" => {
+            if en {
+                "Show"
+            } else {
+                "दिखाओ"
+            }
+        }
+        "done" => {
+            if en {
+                "Done"
+            } else {
+                "हो गया"
+            }
+        }
+        "again" => {
+            if en {
+                "Again"
+            } else {
+                "फिर से"
+            }
+        }
+        "retry" => {
+            if en {
+                "Try the questions"
+            } else {
+                "प्रश्न फिर"
+            }
+        }
+        "once" => {
+            if en {
+                "Once more"
+            } else {
+                "फिर एक बार"
+            }
+        }
+        "paused" => {
+            if en {
+                "Paused"
+            } else {
+                "रुका हुआ"
+            }
+        }
+        "go" => {
+            if en {
+                "Go"
+            } else {
+                "चलो"
+            }
+        }
+        "dots_next" => {
+            if en {
+                "Next you will write on the dots"
+            } else {
+                "आगे बिंदुओं पर लिखेंगे"
+            }
+        }
+        "form" => {
+            if en {
+                "Shape practice"
+            } else {
+                "बनावट का अभ्यास"
+            }
+        }
+        "total" => {
+            if en {
+                "Total"
+            } else {
+                "कुल"
+            }
+        }
+        "class" => {
+            if en {
+                "Class"
+            } else {
+                "कक्षा"
+            }
+        }
+        _ => "",
+    }
 }
 
 pub fn goal_key(goal: Goal) -> &'static str {
@@ -49,20 +270,46 @@ pub fn goal_key(goal: Goal) -> &'static str {
         Goal::Fluency => "fluency",
         Goal::Meaning => "meaning",
         Goal::Writing => "writing",
+        Goal::Count => "count",
+        Goal::AddSub => "add",
+        Goal::Tables => "times",
+        Goal::Divide => "share",
     }
 }
 
 pub fn goal_title(goal: Goal) -> &'static str {
+    goal_title_in(goal, Lang::Hi)
+}
+
+pub fn goal_title_in(goal: Goal, lang: Lang) -> &'static str {
+    if lang == Lang::En {
+        return match goal {
+            Goal::Count => "Counting",
+            Goal::AddSub => "Addition and subtraction",
+            Goal::Tables => "Tables",
+            Goal::Divide => "Sharing",
+            _ => goal_title(goal),
+        };
+    }
     match goal {
         Goal::Listen => "सुनना और बोलना",
         Goal::Letters => "वर्ण और मात्राएँ",
         Goal::Fluency => "प्रवाह से पढ़ना",
         Goal::Meaning => "पढ़कर समझना",
         Goal::Writing => "लिखना",
+        Goal::Count => "गिनती",
+        Goal::AddSub => "जोड़ और घटाव",
+        Goal::Tables => "पहाड़े",
+        Goal::Divide => "बाँटना",
     }
 }
 
 pub fn goal_aim(class_no: u8, goal: Goal) -> &'static str {
+    goal_aim_in(class_no, goal, Lang::Hi)
+}
+
+pub fn goal_aim_in(class_no: u8, goal: Goal, lang: Lang) -> &'static str {
+    let en = lang == Lang::En && is_math_goal(goal);
     match (class_no, goal) {
         (1, Goal::Listen) => "जानी हुई बात सुनो और आसान सवाल का जवाब छुओ।",
         (_, Goal::Listen) => "नई बात सुनो, क्रम बताओ, और एक कारण चुनो।",
@@ -74,6 +321,62 @@ pub fn goal_aim(class_no: u8, goal: Goal) -> &'static str {
         (_, Goal::Meaning) => "तस्वीरों का क्रम बताओ और अर्थ चुनो।",
         (1, Goal::Writing) => "अक्षर, शब्द और एक वाक्य लिखो। बिंदु पहले गहरे हैं, फिर हल्के।",
         (_, Goal::Writing) => "लंबा शब्द और जुड़े वाक्य लिखो। बिंदु धीरे-धीरे मिटते हैं।",
+        (1, Goal::Count) => {
+            if en {
+                "Count forward and back, skip count, and put numbers in order. Write the digits."
+            } else {
+                "आगे और पीछे गिनो, छोड़कर गिनो, और क्रम लगाओ। अंक लिखो।"
+            }
+        }
+        (_, Goal::Count) => {
+            if en {
+                "Before, after, between, and order with bigger numbers. See tens and ones."
+            } else {
+                "बड़े अंकों में पहले, बाद, बीच, और क्रम। दहाई और इकाई देखो।"
+            }
+        }
+        (1, Goal::AddSub) => {
+            if en {
+                "Add and subtract within ten."
+            } else {
+                "दस के अंदर जोड़ो और घटाओ।"
+            }
+        }
+        (_, Goal::AddSub) => {
+            if en {
+                "Add and subtract two-digit numbers."
+            } else {
+                "दो अंकों का जोड़ और घटाव।"
+            }
+        }
+        (1, Goal::Tables) => {
+            if en {
+                "Groups of two, five, and ten."
+            } else {
+                "दो, पाँच, और दस के समूह।"
+            }
+        }
+        (_, Goal::Tables) => {
+            if en {
+                "Tables from two to ten."
+            } else {
+                "दो से दस तक के पहाड़े।"
+            }
+        }
+        (1, Goal::Divide) => {
+            if en {
+                "Take away the same number and count the steps."
+            } else {
+                "बार-बार घटाकर गिनो कितनी बार।"
+            }
+        }
+        (_, Goal::Divide) => {
+            if en {
+                "Share up to twenty by taking away."
+            } else {
+                "बीस तक बाँटो, घटाकर।"
+            }
+        }
     }
 }
 
@@ -89,17 +392,40 @@ pub fn story(class_no: u8) -> Vec<String> {
     }
 }
 
-pub fn bank(class_no: u8, goal: Goal) -> Vec<Section> {
+pub fn bank(class_no: u8, goal: Goal, lang: Lang) -> Vec<Section> {
     match goal {
-        Goal::Listen => vec![Section { title: "कहानी", items: listen_items(class_no) }],
+        Goal::Count | Goal::AddSub | Goal::Tables | Goal::Divide => {
+            super::math::bank(class_no, goal, lang)
+        }
+        Goal::Listen => vec![Section {
+            title: "कहानी",
+            items: listen_items(class_no),
+        }],
         Goal::Letters => letter_sections(class_no),
-        Goal::Fluency => vec![Section { title: "पढ़ो", items: fluency_items(class_no) }],
-        Goal::Meaning => vec![Section { title: "अर्थ", items: meaning_items(class_no) }],
+        Goal::Fluency => vec![Section {
+            title: "पढ़ो",
+            items: fluency_items(class_no),
+        }],
+        Goal::Meaning => vec![Section {
+            title: "अर्थ",
+            items: meaning_items(class_no),
+        }],
         Goal::Writing => writing_sections(class_no),
     }
 }
 
-pub fn paper(class_no: u8, goal: Goal) -> Paper {
+pub fn paper_seeded(class_no: u8, goal: Goal, lang: Lang, seed: u64) -> Paper {
+    if is_math_goal(goal) {
+        super::math::paper(class_no, goal, lang, seed)
+    } else {
+        paper(class_no, goal, lang)
+    }
+}
+
+pub fn paper(class_no: u8, goal: Goal, lang: Lang) -> Paper {
+    if is_math_goal(goal) {
+        return super::math::paper(class_no, goal, lang, 0);
+    }
     let class_one = class_no == 1;
     let questions = match goal {
         Goal::Listen if class_one => vec![
@@ -110,9 +436,21 @@ pub fn paper(class_no: u8, goal: Goal) -> Paper {
             ask("पानी कौन देती है?", &["रीना", "माँ", "पिता"], 0),
         ],
         Goal::Listen => vec![
-            ask("पहले क्या हुआ?", &["रीना ने बीज बोया", "पौधा निकला", "रीना ने पानी दिया"], 0),
-            ask("बीज के बाद क्या हुआ?", &["पौधा निकला", "रीना सो गई", "बारिश रुकी"], 0),
-            ask("आखिर में रीना क्या करती है?", &["पौधे को पानी देती है", "बीज खाती है", "घर बनाती है"], 0),
+            ask(
+                "पहले क्या हुआ?",
+                &["रीना ने बीज बोया", "पौधा निकला", "रीना ने पानी दिया"],
+                0,
+            ),
+            ask(
+                "बीज के बाद क्या हुआ?",
+                &["पौधा निकला", "रीना सो गई", "बारिश रुकी"],
+                0,
+            ),
+            ask(
+                "आखिर में रीना क्या करती है?",
+                &["पौधे को पानी देती है", "बीज खाती है", "घर बनाती है"],
+                0,
+            ),
             ask("पानी क्यों?", &["पौधा हरा रहे", "पौधा सोए", "खेल के लिए"], 0),
             ask("कितनी बातेँ हुईं?", &["तीन", "एक", "पाँच"], 0),
         ],
@@ -135,32 +473,84 @@ pub fn paper(class_no: u8, goal: Goal) -> Paper {
             ask("कहाँ रुकना है?", &["। के बाद", "हर अक्षर पर", "कहीं नहीं"], 0),
             ask("पहला शब्द कौन सा है?", &["रीना", "पानी", "है"], 0),
             ask("आखिरी शब्द कौन सा है?", &["है", "रीना", "पौधे"], 0),
-            ask("यह कैसा वाक्य है?", &["छोटा वाक्य", "लंबी कविता", "तीन कहानियाँ"], 0),
+            ask(
+                "यह कैसा वाक्य है?",
+                &["छोटा वाक्य", "लंबी कविता", "तीन कहानियाँ"],
+                0,
+            ),
         ],
         Goal::Fluency => vec![
             ask("कितने वाक्य हैं?", &["तीन", "एक", "छह"], 0),
-            ask("पहले वाक्य में क्या हुआ?", &["बीज बोया", "पानी दिया", "पौधा निकला"], 0),
+            ask(
+                "पहले वाक्य में क्या हुआ?",
+                &["बीज बोया", "पानी दिया", "पौधा निकला"],
+                0,
+            ),
             ask("बीच वाले वाक्य में क्या निकला?", &["पौधा", "चाँद", "बस"], 0),
             ask("। पर क्या करें?", &["रुकें", "दौड़ें", "लेख मिटाएँ"], 0),
             ask("आखिरी वाक्य में रीना क्या देती है?", &["पानी", "फल", "पुस्तक"], 0),
         ],
         Goal::Meaning if class_one => vec![
             ask("कौन है?", &["रीना", "दादी", "राम"], 0),
-            ask("वह क्या कर रही है?", &["पौधे को पानी दे रही है", "सो रही है", "खा रही है"], 0),
-            ask("चित्र में मुख्य बात क्या है?", &["पानी देना", "चाँद देखना", "होली खेलना"], 0),
-            ask("पौधा किसके पास है?", &["रीना के पास", "दादी के घर में", "तालाब में"], 0),
+            ask(
+                "वह क्या कर रही है?",
+                &["पौधे को पानी दे रही है", "सो रही है", "खा रही है"],
+                0,
+            ),
+            ask(
+                "चित्र में मुख्य बात क्या है?",
+                &["पानी देना", "चाँद देखना", "होली खेलना"],
+                0,
+            ),
+            ask(
+                "पौधा किसके पास है?",
+                &["रीना के पास", "दादी के घर में", "तालाब में"],
+                0,
+            ),
             ask("यह किस बारे में है?", &["पौधे को पानी", "चाँद", "होली"], 0),
         ],
         Goal::Meaning => vec![
-            ask("सही क्रम कौन सा है?", &["बीज, फिर पौधा, फिर पानी", "पानी, फिर बीज, फिर पौधा", "पौधा, फिर पानी, फिर बीज"], 0),
-            ask("बीच में क्या हुआ?", &["पौधा निकला", "रीना सो गई", "बीज उड़ गया"], 0),
-            ask("आखिर में क्या हुआ?", &["रीना ने पानी दिया", "रीना ने बीज खाया", "पौधा गिर गया"], 0),
-            ask("पानी से क्या होता है?", &["पौधा हरा रहता है", "पौधा सो जाता है", "बीज उड़ जाता है"], 0),
-            ask("यह क्रम क्या बताता है?", &["बीज से पौधा बनता है", "चाँद निकलता है", "बारिश रुकती है"], 0),
+            ask(
+                "सही क्रम कौन सा है?",
+                &[
+                    "बीज, फिर पौधा, फिर पानी",
+                    "पानी, फिर बीज, फिर पौधा",
+                    "पौधा, फिर पानी, फिर बीज",
+                ],
+                0,
+            ),
+            ask(
+                "बीच में क्या हुआ?",
+                &["पौधा निकला", "रीना सो गई", "बीज उड़ गया"],
+                0,
+            ),
+            ask(
+                "आखिर में क्या हुआ?",
+                &["रीना ने पानी दिया", "रीना ने बीज खाया", "पौधा गिर गया"],
+                0,
+            ),
+            ask(
+                "पानी से क्या होता है?",
+                &["पौधा हरा रहता है", "पौधा सो जाता है", "बीज उड़ जाता है"],
+                0,
+            ),
+            ask(
+                "यह क्रम क्या बताता है?",
+                &["बीज से पौधा बनता है", "चाँद निकलता है", "बारिश रुकती है"],
+                0,
+            ),
         ],
         Goal::Writing if class_one => vec![
             ask("सही शब्द कौन सा है?", &["पानी", "पनी", "पानीी"], 0),
-            ask("कौन सा वाक्य चित्र के बारे में है?", &["रीना पौधे को पानी देती है।", "राम बस में बैठा।", "दादी पुस्तक पढ़ती है।"], 0),
+            ask(
+                "कौन सा वाक्य चित्र के बारे में है?",
+                &[
+                    "रीना पौधे को पानी देती है।",
+                    "राम बस में बैठा।",
+                    "दादी पुस्तक पढ़ती है।",
+                ],
+                0,
+            ),
             ask("पौधे को क्या चाहिए?", &["पानी", "जूता", "घर"], 0),
             ask("घर कहाँ है?", &["घर", "घार", "गहर"], 0),
             ask("रीना क्या देती है?", &["पानी", "फल", "रंग"], 0),
@@ -168,10 +558,19 @@ pub fn paper(class_no: u8, goal: Goal) -> Paper {
         Goal::Writing => vec![
             ask("सही शब्द कौन सा है?", &["बिल्ली", "बली", "बिली"], 0),
             ask("बच्चा में क्या है?", &["च्च", "ल्ल", "क्ष"], 0),
-            ask("सही क्रम कौन सा है?", &["बीज बोया। पौधा निकला। पानी दिया।", "पानी दिया। बीज बोया। पौधा निकला।", "पौधा निकला। पानी दिया। बीज बोया।"], 0),
+            ask(
+                "सही क्रम कौन सा है?",
+                &[
+                    "बीज बोया। पौधा निकला। पानी दिया।",
+                    "पानी दिया। बीज बोया। पौधा निकला।",
+                    "पौधा निकला। पानी दिया। बीज बोया।",
+                ],
+                0,
+            ),
             ask("पानी क्यों लिखें?", &["पौधा हरा रहे", "पौधा सोए", "बीज उड़े"], 0),
             ask("क्षमा कहाँ है?", &["क्षमा", "क्ष", "मा"], 0),
         ],
+        Goal::Count | Goal::AddSub | Goal::Tables | Goal::Divide => Vec::new(),
     };
     let write = match goal {
         Goal::Writing if class_one => Some("रीना पौधे को पानी देती है।".to_string()),
@@ -188,7 +587,8 @@ pub fn lookup(id: &str) -> Option<Item> {
     if id == "card:plant2" {
         return Some(plant_card(2));
     }
-    id.strip_prefix("extra:").map(|text| super::glyph_item(id.to_string(), text, false))
+    id.strip_prefix("extra:")
+        .map(|text| super::glyph_item(id.to_string(), text, false))
 }
 
 pub fn extra_ids() -> Vec<String> {
@@ -216,14 +616,20 @@ fn meaning_items(class_no: u8) -> Vec<Item> {
 fn letter_sections(class_no: u8) -> Vec<Section> {
     if class_no == 1 {
         vec![
-            Section { title: "स्वर", items: swar_items() },
+            Section {
+                title: "स्वर",
+                items: swar_items(),
+            },
             Section {
                 title: "व्यंजन",
                 items: vyanjan_items().into_iter().take(33).collect(),
             },
             Section {
                 title: "मात्रा",
-                items: [0usize, 20, 24, 26].into_iter().flat_map(barakhadi_items).collect(),
+                items: [0usize, 20, 24, 26]
+                    .into_iter()
+                    .flat_map(barakhadi_items)
+                    .collect(),
             },
             Section {
                 title: "शब्द",
@@ -234,7 +640,10 @@ fn letter_sections(class_no: u8) -> Vec<Section> {
         let mut conjunct: Vec<Item> = vyanjan_items().into_iter().skip(33).collect();
         conjunct.extend(words(&["बच्चा", "बिल्ली", "क्षमा"]));
         vec![
-            Section { title: "संयुक्त", items: conjunct },
+            Section {
+                title: "संयुक्त",
+                items: conjunct,
+            },
             Section {
                 title: "लंबे शब्द",
                 items: words(&["तालाब", "चींटी", "मूली", "मेंढक", "बैंगनी"]),
@@ -255,8 +664,14 @@ fn writing_sections(class_no: u8) -> Vec<Section> {
         words(&["बच्चा", "बिल्ली", "चींटी", "मेंढक", "क्षमा", sentence])
     };
     vec![
-        Section { title: "रेखा", items: pattern_items() },
-        Section { title: "लिखो", items: words_now },
+        Section {
+            title: "रेखा",
+            items: pattern_items(),
+        },
+        Section {
+            title: "लिखो",
+            items: words_now,
+        },
     ]
 }
 
@@ -265,7 +680,10 @@ fn words(list: &[&str]) -> Vec<Item> {
 }
 
 fn word_named(text: &str) -> Item {
-    if let Some(index) = super::hindi::WORDS.iter().position(|(word, _)| *word == text) {
+    if let Some(index) = super::hindi::WORDS
+        .iter()
+        .position(|(word, _)| *word == text)
+    {
         super::glyph_item(format!("word:{index}"), text, false)
     } else {
         super::glyph_item(format!("extra:{text}"), text, false)
@@ -273,7 +691,10 @@ fn word_named(text: &str) -> Item {
 }
 
 fn reads(indexes: &[usize]) -> Vec<Item> {
-    indexes.iter().filter_map(|index| super::reading_item(*index)).collect()
+    indexes
+        .iter()
+        .filter_map(|index| super::reading_item(*index))
+        .collect()
 }
 
 fn plant_card(class_no: u8) -> Item {
@@ -286,14 +707,26 @@ fn plant_card(class_no: u8) -> Item {
         ]
     } else {
         vec![
-            ask("पहले क्या हुआ?", &["रीना ने बीज बोया", "पौधा निकला", "रीना ने पानी दिया"], 0),
-            ask("बीज के बाद क्या हुआ?", &["पौधा निकला", "रीना सो गई", "बारिश रुकी"], 0),
+            ask(
+                "पहले क्या हुआ?",
+                &["रीना ने बीज बोया", "पौधा निकला", "रीना ने पानी दिया"],
+                0,
+            ),
+            ask(
+                "बीज के बाद क्या हुआ?",
+                &["पौधा निकला", "रीना सो गई", "बारिश रुकी"],
+                0,
+            ),
             ask("पानी क्यों?", &["पौधा हरा रहे", "पौधा सोए", "खेल के लिए"], 0),
         ]
     };
     Item {
         id: format!("card:plant{class_no}"),
-        title: if class_no == 1 { "पौधा".to_string() } else { "बीज से पौधा".to_string() },
+        title: if class_no == 1 {
+            "पौधा".to_string()
+        } else {
+            "बीज से पौधा".to_string()
+        },
         speak: lines.join(" "),
         formation: false,
         kind: Kind::Reading { lines, questions },

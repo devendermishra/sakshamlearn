@@ -1,12 +1,12 @@
-use crate::content::{self, Goal};
+use crate::content::{self, Goal, Lang};
 use crate::points;
-use crate::speech::speak;
+use crate::speech::speak_as;
 use crate::state::{use_app, Screen};
+use crate::ui::icon::Icon;
 use crate::ui::quiz::Quiz;
 use crate::ui::rewards::StickerChoice;
 use crate::ui::trace::sample_glyph;
 use crate::ui::writing_board::WritingBoard;
-use crate::ui::icon::Icon;
 use dioxus::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -20,7 +20,20 @@ enum Step {
 
 #[component]
 pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element {
-    let paper = content::paper(class_no, goal);
+    let app = use_app();
+    let lang = if subject == 2 {
+        Lang::from_store(&app.store.read().math_lang)
+    } else {
+        Lang::Hi
+    };
+    let voice = lang.code();
+    let math = content::is_math_goal(goal);
+    let fresh = use_signal(|| points::now_ms() ^ ((nonce as u64 + 1) << 17));
+    let paper = if math {
+        content::paper_seeded(class_no, goal, lang, fresh())
+    } else {
+        content::paper(class_no, goal, lang)
+    };
     let questions = paper.questions.clone();
     let write_text = paper.write.clone();
     let lines = content::story(class_no);
@@ -29,20 +42,26 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
     let prompts: Vec<String> = questions.iter().map(|q| q.prompt.clone()).collect();
     let mut step = use_signal(|| {
         if write_text.is_some() {
-            Step::Write { fade: 0, blank: false }
+            Step::Write {
+                fade: 0,
+                blank: false,
+            }
         } else {
-            Step::Ask { index: 0, correct: 0 }
+            Step::Ask {
+                index: 0,
+                correct: 0,
+            }
         }
     });
     let mut dots = use_signal(Vec::<(f32, f32)>::new);
     let mut reveal = use_signal(|| false);
-    let app = use_app();
     let sound = app.store.read().sound_on;
     let finger_ok = app.store.read().finger_ok;
+    let band = if math { 11 } else { app.store.read().band_mm };
     let mut store_sig = app.store;
     let mut screen = app.screen;
     let exam_id = format!("exam:{class_no}:{}", content::goal_key(goal));
-    let show_story = goal != Goal::Letters;
+    let show_story = !math && goal != Goal::Letters;
 
     {
         let opening = opening.clone();
@@ -50,7 +69,10 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
         let prompts = prompts.clone();
         use_effect(move || {
             let spoken = match step() {
-                Step::Write { fade: 0, blank: false } => opening.clone(),
+                Step::Write {
+                    fade: 0,
+                    blank: false,
+                } => opening.clone(),
                 Step::Ask { index, .. } => {
                     let mut text = String::new();
                     if index == 0 && !passage.is_empty() && show_story {
@@ -64,7 +86,7 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
                 }
                 _ => String::new(),
             };
-            speak(&spoken, sound);
+            speak_as(&spoken, sound, voice);
         });
     }
     {
@@ -84,7 +106,13 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
         let exam_id = exam_id.clone();
         move |correct: u8| {
             let now = points::now_ms();
-            let mapped = if correct >= 4 { 3 } else if correct >= 3 { 2 } else { 0 };
+            let mapped = if correct >= 4 {
+                3
+            } else if correct >= 3 {
+                2
+            } else {
+                0
+            };
             if mapped == 0 {
                 store_sig.write().mark_retry(&exam_id, now);
                 store_sig.write().save();
@@ -93,25 +121,30 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
                 let outcome = store_sig.write().award(&exam_id, mapped, now);
                 store_sig.write().save();
                 if outcome.offer.is_empty() {
-                    step.set(Step::Done { gained: outcome.gained });
+                    step.set(Step::Done {
+                        gained: outcome.gained,
+                    });
                 } else {
-                    step.set(Step::Sticker { options: outcome.offer, gained: outcome.gained });
+                    step.set(Step::Sticker {
+                        options: outcome.offer,
+                        gained: outcome.gained,
+                    });
                 }
             }
         }
     };
 
-    let title = content::goal_title(goal);
-    let _nonce = nonce;
+    let title = content::goal_title_in(goal, lang);
     rsx! {
         div { class: "stage",
+            style: "--band: {band}mm",
             div { class: "subhead",
                 button {
                     class: "back",
                     onclick: move |_| screen.set(Screen::Goals { subject, class_no }),
-                    Icon { name: "arrow-left" } "वापस"
+                    Icon { name: "arrow-left" } "{content::phrase(\"back\", lang)}"
                 }
-                h1 { Icon { name: "clipboard-check" } "परीक्षा · {title}" }
+                h1 { Icon { name: "clipboard-check" } "{content::phrase(\"exam\", lang)} · {title}" }
             }
             match step() {
                 Step::Write { fade, blank } => {
@@ -126,7 +159,7 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
                                 button {
                                     class: "quiet",
                                     onclick: move |_| reveal.set(true),
-                                    Icon { name: "eye" } "दिखाओ"
+                                    Icon { name: "eye" } "{content::phrase(\"show\", lang)}"
                                 }
                             }
                         }
@@ -139,6 +172,7 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
                             ink: true,
                             finger_ok: finger_ok,
                             round: if blank { 3 } else { fade },
+                            lang: lang,
                             on_next: move |_| {
                                 if blank {
                                     step.set(Step::Ask { index: 0, correct: 0 });
@@ -182,16 +216,16 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
                 }
                 Step::Fail => rsx! {
                     div { class: "award",
-                        h1 { "फिर एक बार" }
+                        h1 { "{content::phrase(\"once\", lang)}" }
                         div { class: "actions",
                             button {
                                 onclick: move |_| step.set(Step::Ask { index: 0, correct: 0 }),
-                                Icon { name: "rotate-ccw" } "प्रश्न फिर"
+                                Icon { name: "rotate-ccw" } "{content::phrase(\"retry\", lang)}"
                             }
                             button {
                                 class: "quiet",
                                 onclick: move |_| screen.set(Screen::Home),
-                                Icon { name: "home" } "घर"
+                                Icon { name: "home" } "{content::phrase(\"home\", lang)}"
                             }
                         }
                     }
@@ -211,22 +245,22 @@ pub fn ExamScreen(subject: u8, class_no: u8, goal: Goal, nonce: u32) -> Element 
                 },
                 Step::Done { gained } => rsx! {
                     div { class: "award",
-                        h1 { "हो गया" }
+                        h1 { "{content::phrase(\"done\", lang)}" }
                         if gained > 0 {
                             p { class: "plus", "+{gained}" }
-                            p { "कुल ★ {store_sig.read().points}" }
+                            p { "{content::phrase(\"total\", lang)} ★ {store_sig.read().points}" }
                         }
                         div { class: "actions",
                             button {
                                 onclick: move |_| {
                                     screen.set(Screen::Exam { subject, class_no, goal, nonce: nonce + 1 });
                                 },
-                                Icon { name: "rotate-ccw" } "फिर से"
+                                Icon { name: "rotate-ccw" } "{content::phrase(\"again\", lang)}"
                             }
                             button {
                                 class: "quiet",
                                 onclick: move |_| screen.set(Screen::Goals { subject, class_no }),
-                                Icon { name: "arrow-left" } "वापस"
+                                Icon { name: "arrow-left" } "{content::phrase(\"back\", lang)}"
                             }
                         }
                     }

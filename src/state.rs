@@ -5,15 +5,45 @@ use dioxus::prelude::*;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Screen {
     Home,
-    Classes { subject: u8 },
-    Goals { subject: u8, class_no: u8 },
-    Bank { subject: u8, class_no: u8, goal: Goal, mode: Mode },
-    Exam { subject: u8, class_no: u8, goal: Goal, nonce: u32 },
+    Classes {
+        subject: u8,
+    },
+    Goals {
+        subject: u8,
+        class_no: u8,
+    },
+    Bank {
+        subject: u8,
+        class_no: u8,
+        goal: Goal,
+        mode: Mode,
+    },
+    Exam {
+        subject: u8,
+        class_no: u8,
+        goal: Goal,
+        nonce: u32,
+    },
     #[allow(dead_code)]
-    Skills { mode: Mode },
-    Group { group: Group, mode: Mode },
-    Matra { consonant: usize, mode: Mode },
-    Session { id: String, mode: Mode, nonce: u32 },
+    Skills {
+        mode: Mode,
+    },
+    Group {
+        group: Group,
+        mode: Mode,
+    },
+    Matra {
+        consonant: usize,
+        mode: Mode,
+    },
+    Session {
+        id: String,
+        mode: Mode,
+        nonce: u32,
+    },
+    Aba,
+    AbaCalendar,
+    AbaChecklist,
     Rewards,
     Parent,
 }

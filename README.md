@@ -2,7 +2,7 @@
 
 Saksham (सक्षम) is a calm Hindi learning app for a tablet. A child in class 1 or class 2 opens one subject, picks a goal, and works through short listen, read, and write activities. Stars and stickers mark what is finished. A parent gate keeps sound, finger writing, and the screen lock out of the child’s reach.
 
-The interface is in Hindi. English and गणित appear on the home screen and stay closed.
+The interface is in Hindi. English appears on the home screen and stays closed. गणित is open for class 1 and class 2, in Hindi or English.
 
 There is no account and no server. Progress stays in the browser that opened the app.
 
@@ -14,7 +14,7 @@ The home screen has three doors and a reward board.
 | --- | --- |
 | हिन्दी | Open. Class 1 and class 2. |
 | English | Closed. Labelled बाद में. |
-| गणित | Closed. Labelled बाद में. |
+| गणित | Open. Class 1 and class 2, in Hindi or English. |
 
 हिन्दी leads to a class, then to five goals. Each goal offers **सीखो** (learn), **अभ्यास** (practice), and **परीक्षा** (a short test).
 
@@ -27,6 +27,8 @@ The home screen has three doors and a reward board.
 | लिखना | Write a letter, a word, and one sentence. Guide dots start dark and fade. | Write a longer word and joined sentences. Dots fade more slowly. |
 
 Class 1 is built around one sentence: रीना पौधे को पानी देती है. Class 2 uses three lines: रीना ने बीज बोया, पौधा निकला, रीना पौधे को पानी देती है.
+
+गणित has four goals: counting, addition and subtraction, tables, and sharing by taking away. A हिन्दी / English switch on the class screen is remembered with the stars. Numerals stay `0–9`. Counting covers forward and backward counts, skip counting, what comes before, after, and between, and ascending and descending order. Class 1 stays inside 20, with groups of 2, 5, and 10. Class 2 goes to hundreds, tables 2 through 10, and division shown as repeated subtraction. Digit writing uses the same fading dots, on an 11 mm band.
 
 A button labelled **आज का अभ्यास** sits under the top bar when there is something to review. It opens that item in practice mode.
 
@@ -46,7 +48,7 @@ Learn mode shows the model and speaks it, then a light trace. Practice mode trac
 
 The exam for a goal is five questions. The writing exam also asks the child to copy the class sentence (class 1) or पौधा निकला (class 2). Two correct answers are enough to pass. Fewer than that ends on फिर एक बार, and the same questions can be tried again.
 
-Speech uses the browser speech API in `hi-IN` at a slightly slow rate. The child can tap सुनो to hear a glyph again. Turning sound off on the home screen, or in the parent screen, stops new utterances.
+Speech uses the browser speech API at a slightly slow rate. Hindi lessons use `hi-IN`. Mathematics follows the language switch: `hi-IN` or `en-IN`. The child can tap सुनो to hear a glyph again. Turning sound off on the home screen, or in the parent screen, stops new utterances.
 
 ## Writing
 
@@ -162,7 +164,8 @@ Items are looked up by id in `src/content/mod.rs`:
 | `read:N` | Reading passage |
 | `card:plant1`, `card:plant2` | Class story |
 | `extra:…` | A word or sentence that is not in the word list |
+| `math:C:goal:N` | A mathematics card. `goal` is `count`, `add`, `times`, or `share` |
 
-Each item is a pattern (a list of dots), a glyph (one string to show, speak, and trace), or a reading (lines plus questions). `questions_for` builds three choices for glyphs and patterns from neighbouring items. Readings use the questions stored with the passage.
+Each item is a pattern (a list of dots), a glyph (one string to show, speak, and trace), a reading (lines plus questions), or a number card (a picture, an optional numeral to trace, and three questions in Hindi and English). `questions_for` builds three choices for glyphs and patterns from neighbouring items. Readings and number cards use the questions stored with the item.
 
 Class banks and exam papers are assembled in `src/content/catalog.rs` (`bank`, `paper`, `story`). A new class 1 or class 2 activity belongs there, with a stable id so the review schedule can find it again.

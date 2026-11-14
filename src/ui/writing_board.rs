@@ -1,6 +1,7 @@
+use super::icon::Icon;
+use crate::content::{self, Lang};
 use crate::score;
 use dioxus::prelude::*;
-use super::icon::Icon;
 use gloo_timers::future::TimeoutFuture;
 
 #[component]
@@ -13,6 +14,7 @@ pub fn WritingBoard(
     ink: bool,
     finger_ok: bool,
     round: u8,
+    lang: Lang,
     on_next: EventHandler<bool>,
 ) -> Element {
     let mut strokes = use_signal(Vec::<Vec<(f32, f32)>>::new);
@@ -160,7 +162,7 @@ pub fn WritingBoard(
                         strokes.set(Vec::new());
                         missed.set(Vec::new());
                     },
-                    Icon { name: "eraser" } "मिटाओ"
+                    Icon { name: "eraser" } "{content::phrase(\"erase\", lang)}"
                 }
                 button {
                     onclick: move |_| {
@@ -168,7 +170,7 @@ pub fn WritingBoard(
                         missed.set(result.missed.clone());
                         on_next.call(result.pass);
                     },
-                    Icon { name: "arrow-right" } "आगे"
+                    Icon { name: "arrow-right" } "{content::phrase(\"next\", lang)}"
                 }
             }
         }
@@ -177,8 +179,16 @@ pub fn WritingBoard(
 
 fn map_point(x: f64, y: f64, size: (f64, f64)) -> (f32, f32) {
     let (w, h) = size;
-    let nx = if w > 1.0 { (x / w * 100.0).clamp(0.0, 100.0) } else { x.clamp(0.0, 100.0) };
-    let ny = if h > 1.0 { (y / h * 100.0).clamp(0.0, 100.0) } else { y.clamp(0.0, 100.0) };
+    let nx = if w > 1.0 {
+        (x / w * 100.0).clamp(0.0, 100.0)
+    } else {
+        x.clamp(0.0, 100.0)
+    };
+    let ny = if h > 1.0 {
+        (y / h * 100.0).clamp(0.0, 100.0)
+    } else {
+        y.clamp(0.0, 100.0)
+    };
     (nx as f32, ny as f32)
 }
 

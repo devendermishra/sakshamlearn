@@ -36,6 +36,10 @@ pub struct Store {
     pub next_due: std::collections::BTreeMap<String, u64>,
     #[serde(default)]
     pub streak: std::collections::BTreeMap<String, u32>,
+    #[serde(default = "default_math_lang")]
+    pub math_lang: String,
+    #[serde(default)]
+    pub aba_done: std::collections::BTreeMap<String, Vec<String>>,
 }
 
 fn default_sound() -> bool {
@@ -44,6 +48,10 @@ fn default_sound() -> bool {
 
 fn default_band() -> u8 {
     8
+}
+
+fn default_math_lang() -> String {
+    "hi".to_string()
 }
 
 impl Default for Store {
@@ -59,6 +67,8 @@ impl Default for Store {
             band_mm: 8,
             next_due: std::collections::BTreeMap::new(),
             streak: std::collections::BTreeMap::new(),
+            math_lang: default_math_lang(),
+            aba_done: std::collections::BTreeMap::new(),
         }
     }
 }
@@ -151,6 +161,37 @@ impl Store {
     pub fn mark_retry(&mut self, session_id: &str, now: u64) {
         self.streak.insert(session_id.to_string(), 0);
         self.next_due.insert(session_id.to_string(), now);
+    }
+
+    pub fn aba_toggle(&mut self, day: &str, id: &str) {
+        let empty = {
+            let entry = self.aba_done.entry(day.to_string()).or_default();
+            if let Some(pos) = entry.iter().position(|kept| kept == id) {
+                entry.remove(pos);
+            } else {
+                entry.push(id.to_string());
+            }
+            entry.is_empty()
+        };
+        if empty {
+            self.aba_done.remove(day);
+        }
+        while self.aba_done.len() > 40 {
+            let Some(oldest) = self.aba_done.keys().next().cloned() else {
+                break;
+            };
+            self.aba_done.remove(&oldest);
+        }
+    }
+
+    pub fn aba_has(&self, day: &str, id: &str) -> bool {
+        self.aba_done
+            .get(day)
+            .is_some_and(|ids| ids.iter().any(|kept| kept == id))
+    }
+
+    pub fn aba_any(&self, day: &str) -> bool {
+        self.aba_done.get(day).is_some_and(|ids| !ids.is_empty())
     }
 
     pub fn keep_sticker(&mut self, id: &str) {

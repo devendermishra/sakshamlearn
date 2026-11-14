@@ -1,8 +1,8 @@
 use crate::content::{self, Group, Mode};
 use crate::points;
 use crate::state::{use_app, Screen};
-use dioxus::prelude::*;
 use crate::ui::icon::Icon;
+use dioxus::prelude::*;
 
 #[component]
 pub fn Home() -> Element {
@@ -12,9 +12,10 @@ pub fn Home() -> Element {
         let ids = content::all_practice_ids();
         points::suggest(&store, &ids)
     };
+    let math_lang = content::Lang::from_store(&store.math_lang);
     let suggestion_title = suggestion
         .as_ref()
-        .and_then(|id| content::find(id))
+        .and_then(|id| content::find_in(id, math_lang))
         .map(|item| item.title);
     let mut pressed = use_signal(|| None::<u64>);
     let mut screen = app.screen;
@@ -71,14 +72,20 @@ pub fn Home() -> Element {
                         disabled: !subject.open,
                         onclick: move |_| {
                             if subject.open {
-                                screen.set(Screen::Classes { subject: subject.index });
+                                if subject.index == 3 {
+                                    screen.set(Screen::Aba);
+                                } else {
+                                    screen.set(Screen::Classes { subject: subject.index });
+                                }
                             }
                         },
                         Icon { name: crate::ui::icon::subject_icon(subject.index) } h2 { "{subject.title}" }
-                        if subject.open {
-                            p { "कक्षा 1 और कक्षा 2" }
-                        } else {
+                        if !subject.open {
                             p { "बाद में" }
+                        } else if subject.index == 3 {
+                            p { "कैलेंडर और घर की योजना" }
+                        } else {
+                            p { "कक्षा 1 और कक्षा 2" }
                         }
                     }
                 }

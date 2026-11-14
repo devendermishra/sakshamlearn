@@ -1,13 +1,40 @@
+pub mod aba;
 mod catalog;
 mod hindi;
+mod math;
 mod patterns;
 
 pub use catalog::{
-    bank, extra_ids, goal_aim, goal_key, goal_title, lookup, paper, story, subjects, Goal, GOALS,
+    bank, class_blurb, extra_ids, goal_aim, goal_aim_in, goal_key, goal_title, goal_title_in,
+    goals_for, is_math_goal, lookup, paper, paper_seeded, phrase, story, subject_heading, subjects,
+    Goal, GOALS,
 };
 
-use hindi::{FORMS, FORMATION, READINGS, SWAR, VYANJAN, WORDS, WORD_GROUPS};
+use hindi::{FORMATION, FORMS, READINGS, SWAR, VYANJAN, WORDS, WORD_GROUPS};
 use patterns::PATTERNS;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Lang {
+    Hi,
+    En,
+}
+
+impl Lang {
+    pub fn code(self) -> &'static str {
+        match self {
+            Lang::Hi => "hi-IN",
+            Lang::En => "en-IN",
+        }
+    }
+
+    pub fn from_store(value: &str) -> Self {
+        if value == "en" {
+            Lang::En
+        } else {
+            Lang::Hi
+        }
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Mode {
@@ -33,9 +60,22 @@ pub struct QuizQ {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Kind {
-    Pattern { dots: Vec<(f32, f32)> },
-    Glyph { text: String },
-    Reading { lines: Vec<String>, questions: Vec<QuizQ> },
+    Pattern {
+        dots: Vec<(f32, f32)>,
+    },
+    Glyph {
+        text: String,
+    },
+    Reading {
+        lines: Vec<String>,
+        questions: Vec<QuizQ>,
+    },
+    Number {
+        picture: String,
+        trace: Option<String>,
+        handwriting: bool,
+        questions: Vec<QuizQ>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +88,14 @@ pub struct Item {
 }
 
 pub fn find(id: &str) -> Option<Item> {
+    find_in(id, Lang::Hi)
+}
+
+pub fn find_in(id: &str, lang: Lang) -> Option<Item> {
+    find_for(id, lang, 0)
+}
+
+pub fn find_for(id: &str, lang: Lang, seed: u64) -> Option<Item> {
     let mut parts = id.split(':');
     let kind = parts.next()?;
     match kind {
@@ -57,13 +105,14 @@ pub fn find(id: &str) -> Option<Item> {
         }
         "swar" => {
             let index: usize = parts.next()?.parse().ok()?;
-            SWAR.get(index).map(|text| glyph_item(format!("swar:{index}"), text, false))
+            SWAR.get(index)
+                .map(|text| glyph_item(format!("swar:{index}"), text, false))
         }
         "vyn" => {
             let index: usize = parts.next()?.parse().ok()?;
-            VYANJAN.get(index).map(|text| {
-                glyph_item(format!("vyn:{index}"), text, FORMATION.contains(text))
-            })
+            VYANJAN
+                .get(index)
+                .map(|text| glyph_item(format!("vyn:{index}"), text, FORMATION.contains(text)))
         }
         "bar" => {
             let consonant: usize = parts.next()?.parse().ok()?;
@@ -72,13 +121,16 @@ pub fn find(id: &str) -> Option<Item> {
         }
         "word" => {
             let index: usize = parts.next()?.parse().ok()?;
-            WORDS.get(index).map(|(text, _)| glyph_item(format!("word:{index}"), text, false))
+            WORDS
+                .get(index)
+                .map(|(text, _)| glyph_item(format!("word:{index}"), text, false))
         }
         "read" => {
             let index: usize = parts.next()?.parse().ok()?;
             reading_item(index)
         }
         "card" | "extra" => lookup(id),
+        "math" => math::lookup(id, lang, seed),
         _ => None,
     }
 }
@@ -139,12 +191,17 @@ pub fn all_practice_ids() -> Vec<String> {
     ids.extend((0..WORDS.len()).map(|index| format!("word:{index}")));
     ids.extend((0..READINGS.len()).map(|index| format!("read:{index}")));
     ids.extend(extra_ids());
+    ids.extend(math::practice_ids());
     ids
+}
+
+pub fn next_id(id: &str) -> Option<String> {
+    math::next_id(id)
 }
 
 pub fn questions_for(item: &Item) -> Vec<QuizQ> {
     match &item.kind {
-        Kind::Reading { questions, .. } => questions.clone(),
+        Kind::Reading { questions, .. } | Kind::Number { questions, .. } => questions.clone(),
         Kind::Glyph { .. } | Kind::Pattern { .. } => {
             let pool = pool_for(item);
             (0..3)
@@ -181,7 +238,11 @@ fn pool_for(item: &Item) -> Vec<String> {
 }
 
 fn glyph_question(target: &str, pool: &[String], salt: usize) -> QuizQ {
-    let others: Vec<&str> = pool.iter().map(String::as_str).filter(|c| *c != target).collect();
+    let others: Vec<&str> = pool
+        .iter()
+        .map(String::as_str)
+        .filter(|c| *c != target)
+        .collect();
     let (first, second) = if others.len() >= 2 {
         let a = others[salt % others.len()];
         let mut b_index = (salt + 1) % others.len();
@@ -194,7 +255,12 @@ fn glyph_question(target: &str, pool: &[String], salt: usize) -> QuizQ {
     };
     let answer = salt % 3;
     let mut choices = vec![first, second, target.to_string()];
-    while choices.iter().position(|choice| choice == target).unwrap_or(0) != answer {
+    while choices
+        .iter()
+        .position(|choice| choice == target)
+        .unwrap_or(0)
+        != answer
+    {
         choices.rotate_left(1);
     }
     QuizQ {

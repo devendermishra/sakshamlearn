@@ -1,7 +1,7 @@
+use super::icon::Icon;
 use crate::points::{self, STICKERS};
 use crate::state::use_app;
 use dioxus::prelude::*;
-use super::icon::Icon;
 
 #[component]
 pub fn RewardFace(id: String) -> Element {
