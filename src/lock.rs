@@ -21,29 +21,27 @@ pub fn apply(lock_on: bool) {
 #[cfg(target_os = "android")]
 fn android_set(lock: bool) {
     let ctx = ndk_context::android_context();
-    let vm_ptr = ctx.vm_as_ptr() as *mut jni::sys::JavaVM;
+    let vm_ptr = ctx.vm() as *mut jni::sys::JavaVM;
     let Ok(vm) = (unsafe { jni::JavaVM::from_raw(vm_ptr) }) else {
         return;
     };
+    let vm = std::mem::ManuallyDrop::new(vm);
     let Ok(mut guard) = vm.attach_current_thread() else {
-        std::mem::forget(vm);
         return;
     };
     let activity_ptr = ctx.context() as jni::sys::jobject;
-    if activity_ptr.is_null() {
-        std::mem::forget(vm);
-        return;
+    if !activity_ptr.is_null() {
+        let activity = unsafe { jni::objects::JObject::from_raw(activity_ptr) };
+        let method = if lock {
+            "startLockTask"
+        } else {
+            "stopLockTask"
+        };
+        let _ = guard.call_method(&activity, method, "()V", &[]);
+        if guard.exception_check().unwrap_or(false) {
+            let _ = guard.exception_clear();
+        }
+        std::mem::forget(activity);
     }
-    let activity = unsafe { jni::objects::JObject::from_raw(activity_ptr) };
-    let method = if lock {
-        "startLockTask"
-    } else {
-        "stopLockTask"
-    };
-    let _ = guard.call_method(&activity, method, "()V", &[]);
-    if guard.exception_check().unwrap_or(false) {
-        let _ = guard.exception_clear();
-    }
-    std::mem::forget(activity);
-    std::mem::forget(vm);
+    drop(guard);
 }
